@@ -1,34 +1,28 @@
-# Используем более свежий базовый образ
 FROM python:3.11-slim-bookworm
 
-# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Устанавливаем зависимости без фиксированных версий
+# Устанавливаем зависимости, включая gcc
 RUN apt-get update && apt-get install --no-install-recommends -y \
+    gcc \
     dnsutils \
     libpq-dev \
     python3-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Настраиваем переменные окружения
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Обновляем pip и устанавливаем зависимости
 RUN python -m pip install --upgrade pip
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем проект
 COPY . .
 
-# Настраиваем приложение
 EXPOSE 8000
 RUN python manage.py migrate
 
-# Запускаем сервер
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "6", "pygoat.wsgi"]
 
 ##################################
